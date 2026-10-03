@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flexiqe</title>
+<meta name="description" content="Flexiqe — Built Beyond Boundaries. An independent software studio building PetMate and more.">
+<meta property="og:title" content="Flexiqe">
+<meta property="og:description" content="Flexiqe — Built Beyond Boundaries. An independent software studio building PetMate and more.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 L14 10 L22 12 L14 14 L12 22 L10 14 L2 12 L10 10 Z' fill='%23E7E9EC'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html { scroll-behavior: smooth; }
+  body { background:#060708; color:#E7E9EC; font-family:'Inter',sans-serif; }
+  #bg-canvas { position: fixed; inset: 0; z-index: 0; display: block; }
+  .content { position: relative; z-index: 1; }
+
+  /* Hero */
+  .hero { min-height: 100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding: 60px 24px; gap: 28px; }
+  .hero-logo { width: min(640px, 90vw); height: auto; }
+  .hero-tagline { font-family:'Chakra Petch', sans-serif; font-weight:500; font-size: clamp(1rem,2.4vw,1.3rem); color:#9BA1AA; letter-spacing: 0.03em; opacity:0; transition: opacity 0.8s ease 3.4s; }
+  .hero-tagline.shown { opacity: 1; }
+  .scroll-hint { font-size: 0.78rem; color:#4A4F58; margin-top: 10px; opacity:0; transition: opacity 0.8s ease 4s; }
+  .scroll-hint.shown { opacity: 1; }
+
+  /* Constellation logo -- generated and validated separately, then
+     embedded here as-is (one bug fixed: xmlns namespace) */
+  .logo-container { width: min(760px, 92vw); height: auto; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .logo-container svg { width: 100%; height: auto; display: block; }
+  .star-dot { opacity: 0; animation: revealStars 0.6s ease-out forwards; }
+  .constellation-line { stroke-dasharray: 600; stroke-dashoffset: 600; animation: completeTraces 2.5s ease-in-out forwards; animation-delay: 0.5s; }
+  .local-flare { opacity: 0; animation: staticIllumination 0.8s ease-out forwards; animation-delay: 2.6s; }
+  .kinetic-flare { opacity: 0; transform-origin: center; animation: centerScaleFlare 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; animation-delay: 2.6s; }
+  @keyframes revealStars { to { opacity: 1; } }
+  @keyframes completeTraces { to { stroke-dashoffset: 0; } }
+  @keyframes staticIllumination { 0% { opacity: 0; filter: brightness(0.3); } 100% { opacity: 1; filter: brightness(1); } }
+  @keyframes centerScaleFlare { 0% { opacity: 0; transform: scale(0); } 100% { opacity: 1; transform: scale(1); } }
+
+  /* Our Apps */
+  .pin-section { position: relative; }
+  .pin-sticky { position: sticky; top: 0; width: 100%; height: 100vh; overflow: hidden; display: block; }
+  .center-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 8; text-align: center; pointer-events: none; }
+  .center-text .eyebrow { font-family:'Chakra Petch', sans-serif; font-size:0.85rem; color:#9BA1AA; letter-spacing:0.08em; margin-bottom:8px; }
+  .center-text .title { font-family:'Chakra Petch', sans-serif; font-size:clamp(1.6rem,4vw,2.4rem); font-weight:700; }
+  .form-card { position:absolute; top:0; left:0; width:150px; height:150px; margin:-75px 0 0 -75px; border-radius:6px; background:rgba(21,23,28,0.92); border:1px solid rgba(155,161,170,0.25); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; backdrop-filter:blur(4px); will-change:transform,opacity; text-decoration:none; color:inherit; transition: border-color 0.25s ease, background 0.25s ease; }
+  a.form-card { cursor: pointer; }
+  a.form-card:hover { border-color: rgba(255,107,53,0.6); background: rgba(27,30,36,0.95); }
+  .item-icon { border-radius:10px; width:40px; height:40px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.1rem; color:#fff; font-family:'Chakra Petch',sans-serif; }
+  .item-icon.active { background: linear-gradient(135deg,#FF8A5C,#FF6B35); }
+  .item-icon.placeholder { background: rgba(155,161,170,0.15); color:#6B707A; }
+  .form-card span { font-size:0.78rem; color:#9BA1AA; font-family:'Chakra Petch',sans-serif; }
+  .canvas-layer { position:absolute; inset:0; z-index:4; display:block; }
+
+  /* About */
+  .about { max-width: 640px; margin: 0 auto; padding: 140px 24px; text-align: center; }
+  .about .eyebrow { font-family:'Chakra Petch', sans-serif; font-size:0.85rem; color:#9BA1AA; letter-spacing:0.08em; margin-bottom:18px; }
+  .about p { font-size: 1.05rem; line-height: 1.7; color:#9BA1AA; }
+  .about strong { color:#E7E9EC; font-weight:500; }
+
+  /* Footer */
+  footer { border-top: 1px solid rgba(155,161,170,0.15); padding: 48px 24px 60px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:16px; max-width: 1000px; margin: 0 auto; }
+  footer a { color:#9BA1AA; text-decoration:none; font-size:0.9rem; transition: color 0.2s ease; }
+  footer a:hover { color:#E7E9EC; }
+  .footer-copy { color:#4A4F58; font-size:0.82rem; }
+
+  .scroll-hint { cursor: pointer; }
+
+  /* Respect the OS-level "reduce motion" setting -- skip the logo's
+     draw-in and the particle field's mouse parallax, show the final
+     state immediately instead of animating into it */
+  @media (prefers-reduced-motion: reduce) {
+    .star-dot, .local-flare, .kinetic-flare { animation: none !important; opacity: 1 !important; }
+    .constellation-line { animation: none !important; stroke-dashoffset: 0 !important; }
+    .hero-tagline, .scroll-hint { transition: none !important; opacity: 1 !important; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<div class="content">
+
+  <div class="hero">
+    <div class="logo-container" id="flexiqeLogo">
+      <svg viewBox="0 0 950 300" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="cosmic-lens" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="2.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        <g stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.85">
+          <path class="constellation-line" d="M 80,110 L 150,110 M 80,110 L 80,220 M 80,160 L 135,160" />
+          <path class="constellation-line" d="M 210,110 L 210,220 L 275,220" />
+          <path class="constellation-line" d="M 330,110 L 400,110 M 330,110 L 330,220 L 400,220 M 330,165 L 385,165" />
+          <path class="constellation-line" d="M 440,220 L 495,165 L 550,110 L 600,60" />
+          <path class="constellation-line" d="M 440,110 L 550,220" />
+          <path class="constellation-line" d="M 600,140 L 600,220" />
+          <path class="constellation-line" d="M 690,110 C 730,110 750,130 750,165 C 750,200 730,220 690,220 C 650,220 630,200 630,165 C 630,130 650,110 690,110 Z M 710,195 L 755,240" />
+          <path class="constellation-line" d="M 810,110 L 880,110 M 810,110 L 810,220 L 880,220 M 810,165 L 865,165" />
+        </g>
+
+        <g fill="#ffffff">
+          <circle class="star-dot" cx="80" cy="110" r="3.5" style="animation-delay: 0.1s;" />
+          <circle class="star-dot" cx="150" cy="110" r="3" style="animation-delay: 0.2s;" />
+          <circle class="star-dot" cx="80" cy="160" r="3" style="animation-delay: 0.15s;" />
+          <circle class="star-dot" cx="135" cy="160" r="2.5" style="animation-delay: 0.25s;" />
+          <circle class="star-dot" cx="80" cy="220" r="3.5" style="animation-delay: 0.2s;" />
+          <circle class="star-dot" cx="210" cy="110" r="3.5" style="animation-delay: 0.1s;" />
+          <circle class="star-dot" cx="210" cy="220" r="3.5" style="animation-delay: 0.25s;" />
+          <circle class="star-dot" cx="275" cy="220" r="3" style="animation-delay: 0.35s;" />
+          <circle class="star-dot" cx="330" cy="110" r="3.5" style="animation-delay: 0.15s;" />
+          <circle class="star-dot" cx="400" cy="110" r="3" style="animation-delay: 0.25s;" />
+          <circle class="star-dot" cx="330" cy="165" r="3" style="animation-delay: 0.2s;" />
+          <circle class="star-dot" cx="385" cy="165" r="2.5" style="animation-delay: 0.3s;" />
+          <circle class="star-dot" cx="330" cy="220" r="3.5" style="animation-delay: 0.25s;" />
+          <circle class="star-dot" cx="400" cy="220" r="3" style="animation-delay: 0.35s;" />
+          <circle class="star-dot" cx="440" cy="110" r="3.5" style="animation-delay: 0.2s;" />
+          <circle class="star-dot" cx="550" cy="110" r="4" style="animation-delay: 0.1s;" />
+          <circle class="star-dot" cx="495" cy="165" r="4.5" style="animation-delay: 0.3s;" />
+          <circle class="star-dot" cx="440" cy="220" r="3.5" style="animation-delay: 0.35s;" />
+          <circle class="star-dot" cx="550" cy="220" r="3.5" style="animation-delay: 0.25s;" />
+          <circle class="star-dot" cx="600" cy="60" r="4.5" style="animation-delay: 0.15s;" />
+          <circle class="star-dot" cx="600" cy="140" r="3" style="animation-delay: 0.3s;" />
+          <circle class="star-dot" cx="600" cy="220" r="3.5" style="animation-delay: 0.4s;" />
+          <circle class="star-dot" cx="690" cy="110" r="3.5" style="animation-delay: 0.2s;" />
+          <circle class="star-dot" cx="750" cy="165" r="3.5" style="animation-delay: 0.3s;" />
+          <circle class="star-dot" cx="690" cy="220" r="3.5" style="animation-delay: 0.4s;" />
+          <circle class="star-dot" cx="630" cy="165" r="3" style="animation-delay: 0.25s;" />
+          <circle class="star-dot" cx="710" cy="195" r="3" style="animation-delay: 0.45s;" />
+          <circle class="star-dot" cx="755" cy="240" r="3" style="animation-delay: 0.5s;" />
+          <circle class="star-dot" cx="810" cy="110" r="3.5" style="animation-delay: 0.25s;" />
+          <circle class="star-dot" cx="880" cy="110" r="3" style="animation-delay: 0.35s;" />
+          <circle class="star-dot" cx="810" cy="165" r="3" style="animation-delay: 0.3s;" />
+          <circle class="star-dot" cx="865" cy="165" r="2.5" style="animation-delay: 0.4s;" />
+          <circle class="star-dot" cx="810" cy="220" r="3.5" style="animation-delay: 0.35s;" />
+          <circle class="star-dot" cx="880" cy="220" r="3" style="animation-delay: 0.45s;" />
+        </g>
+
+        <g filter="url(#cosmic-lens)">
+          <g class="local-flare"><circle cx="80" cy="110" r="6" fill="#fff" opacity="0.4"/><path d="M80,98 L80,122 M68,110 L92,110" stroke="#fff" stroke-width="0.75"/></g>
+          <g class="local-flare"><circle cx="80" cy="220" r="5" fill="#fff" opacity="0.3"/></g>
+          <g class="local-flare"><circle cx="210" cy="110" r="6" fill="#fff" opacity="0.4"/><path d="M210,98 L210,122 M198,110 L222,110" stroke="#fff" stroke-width="0.75"/></g>
+          <g class="local-flare"><circle cx="330" cy="110" r="6" fill="#fff" opacity="0.4"/></g>
+          <g class="local-flare"><circle cx="330" cy="220" r="5" fill="#fff" opacity="0.3"/></g>
+          <g class="kinetic-flare">
+            <path d="M 495,142 L 495,188 M 472,165 L 518,165" stroke="#ffffff" stroke-width="1.25" />
+            <circle cx="495" cy="165" r="5.5" fill="#ffffff" />
+          </g>
+          <g class="kinetic-flare">
+            <path d="M 600,32 L 600,88 M 572,60 L 628,60" stroke="#ffffff" stroke-width="1.5" />
+            <circle cx="600" cy="60" r="7.5" fill="#ffffff" />
+          </g>
+          <g class="local-flare"><circle cx="690" cy="110" r="6" fill="#fff" opacity="0.4"/><path d="M690,98 L690,122 M678,110 L702,110" stroke="#fff" stroke-width="0.75"/></g>
+          <g class="local-flare"><circle cx="755" cy="240" r="5" fill="#fff" opacity="0.3"/></g>
+          <g class="local-flare"><circle cx="880" cy="110" r="6" fill="#fff" opacity="0.4"/><path d="M880,98 L880,122 M868,110 L892,110" stroke="#fff" stroke-width="0.75"/></g>
+          <g class="local-flare"><circle cx="810" cy="220" r="5" fill="#fff" opacity="0.3"/></g>
+        </g>
+      </svg>
+    </div>
+
+    <div class="hero-tagline" id="tagline">Endless Possibilities.</div>
+    <div class="scroll-hint" id="scrollHint" onclick="document.getElementById('secForm').scrollIntoView({behavior:'smooth'})">Scroll ↓</div>
+  </div>
+
+  <div class="pin-section" id="secForm" style="height: 300vh;">
+    <div class="pin-sticky" id="stickyForm">
+      <canvas id="particleCanvas" class="canvas-layer"></canvas>
+      <div class="center-text"><div class="eyebrow">OUR APPS</div><div class="title">Flexiqe</div></div>
+    </div>
+  </div>
+
+  <div class="about">
+    <div class="eyebrow">ABOUT</div>
+    <p style="font-family:'Chakra Petch',sans-serif; font-weight:500; color:#E7E9EC; font-size:1.15rem; margin-bottom:18px;">
+      Flexiqe — Built for Every Possibility.
+    </p>
+    <p>
+      Flexiqe is an independent software studio. Right now, that means one person
+      and one product — <strong>PetMate</strong> — built end to end, with the kind
+      of care that's easier to promise than to deliver. More products will follow
+      the same way: slowly, deliberately, and only once they're ready.
+    </p>
+  </div>
+
+  <footer>
+    <a href="mailto:petmate2k24@gmail.com">petmate2k24@gmail.com</a>
+    <span class="footer-copy">© 2026 Flexiqe</span>
+  </footer>
+
+</div>
+
+<script>
+function clamp(v,a,b){ return Math.min(b,Math.max(a,v)); }
+function lerp(a,b,t){ return a+(b-a)*t; }
+function easeOutCubic(t){ return 1-Math.pow(1-t,3); }
+
+/* Persistent particle depth field background */
+(function () {
+  const canvas = document.getElementById('bg-canvas');
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 100);
+  camera.position.set(0,0,5);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  addEventListener('resize', () => { camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); });
+  const count=2200; const positions=new Float32Array(count*3);
+  for (let i=0;i<count;i++){ positions[i*3]=(Math.random()-0.5)*20; positions[i*3+1]=(Math.random()-0.5)*20; positions[i*3+2]=(Math.random()-0.5)*20; }
+  const geo=new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(positions,3));
+  const mat=new THREE.PointsMaterial({ color:0x9BA1AA, size:0.032, transparent:true, opacity:0.6 });
+  const points=new THREE.Points(geo,mat); scene.add(points);
+  let mouseX=0, mouseY=0;
+  addEventListener('mousemove', e => { mouseX=(e.clientX/innerWidth-0.5)*2; mouseY=(e.clientY/innerHeight-0.5)*2; });
+  (function loop(){ requestAnimationFrame(loop); points.rotation.y+=0.0004; camera.position.x=mouseX*0.8; camera.position.y=-mouseY*0.8; camera.lookAt(0,0,0); renderer.render(scene,camera); })();
+})();
+
+/* Logo entrance now plays automatically via the CSS keyframes/
+   delays defined above -- no JS needed to drive it. We just reveal
+   the tagline/scroll-hint once that sequence has finished (their
+   own CSS transition delays are already tuned to match), and wire
+   up click-to-replay on the logo itself. */
+(function () {
+  setTimeout(() => {
+    document.getElementById('tagline').classList.add('shown');
+    document.getElementById('scrollHint').classList.add('shown');
+  }, 3400);
+
+  const logo = document.getElementById('flexiqeLogo');
+  logo.addEventListener('click', () => {
+    const classNames = ['star-dot', 'constellation-line', 'local-flare', 'kinetic-flare'];
+    const groups = classNames.map(cls => ({
+      cls,
+      els: Array.from(logo.querySelectorAll('.' + cls))
+    }));
+    // Capture element references BEFORE removing the class, since
+    // querying by that class again afterward would find nothing
+    groups.forEach(g => g.els.forEach(el => el.classList.remove(g.cls)));
+    void logo.offsetWidth; // force a reflow so the removal registers
+    requestAnimationFrame(() => {
+      groups.forEach(g => g.els.forEach(el => el.classList.add(g.cls)));
+    });
+  });
+})();
+
+/* Our Apps: Particle Formation, gather (scroll-driven) + fast snap
+   (time-based, automatic) -- the confirmed final effect */
+(function () {
+  const section = document.getElementById('secForm');
+  const sticky = document.getElementById('stickyForm');
+  const canvas = document.getElementById('particleCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = Math.min(devicePixelRatio, 2);
+  function resizeCanvas() {
+    const rect = sticky.getBoundingClientRect();
+    canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+    canvas.style.width = rect.width + 'px'; canvas.style.height = rect.height + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resizeCanvas(); addEventListener('resize', resizeCanvas);
+
+  const slotCount = 4, activeIndex = 1;
+  function computeSlots() {
+    const rect = sticky.getBoundingClientRect();
+    const span = Math.min(rect.width * 0.68, 560);
+    const spacing = span / (slotCount - 1);
+    return Array.from({length: slotCount}, (_, i) => ({
+      x: rect.width/2 + (i - (slotCount-1)/2) * spacing,
+      y: rect.height/2 + 150
+    }));
+  }
+  let slots = computeSlots();
+
+  let particles = [];
+  function buildParticles() {
+    const rect = sticky.getBoundingClientRect();
+    particles = [];
+    slots.forEach(slot => {
+      for (let p=0;p<90;p++){
+        particles.push({ startX: Math.random()*rect.width, startY: Math.random()*rect.height, homeX: slot.x+(Math.random()-0.5)*50, homeY: slot.y+(Math.random()-0.5)*50 });
+      }
+    });
+  }
+  buildParticles();
+
+  const cards = [];
+  for (let i=0;i<slotCount;i++){
+    const isActive = i === activeIndex;
+    const el = document.createElement(isActive ? 'a' : 'div');
+    el.className = 'form-card'; el.style.opacity = '0';
+    if (isActive) {
+      el.href = 'https://petmate.flexiqe.com';
+      el.target = '_blank';
+      el.rel = 'noopener noreferrer';
+    }
+    el.innerHTML = isActive ? '<div class="item-icon active">P</div><span>PetMate</span>' : '<div class="item-icon placeholder">+</div><span>Next app</span>';
+    sticky.appendChild(el); cards.push(el);
+  }
+  function positionCards() { cards.forEach((el, i) => { el.style.transform = `translate(${slots[i].x}px, ${slots[i].y}px)`; }); }
+  positionCards();
+
+  addEventListener('resize', () => { slots = computeSlots(); buildParticles(); positionCards(); });
+
+  let formed = false, formedAt = 0;
+  const SNAP_DURATION = 250;
+  let smoothedProgress = 0;
+  function targetProgress(){ const rect=section.getBoundingClientRect(); const scrollable=section.offsetHeight-innerHeight; return clamp(-rect.top/scrollable,0,1); }
+
+  function frame(){
+    requestAnimationFrame(frame);
+    smoothedProgress = lerp(smoothedProgress, targetProgress(), 0.08);
+    const gather = easeOutCubic(clamp(smoothedProgress/0.8, 0, 1));
+
+    if (!formed && gather > 0.97) { formed = true; formedAt = performance.now(); }
+    else if (formed && gather < 0.9) { formed = false; }
+
+    let particleOpacity, cardOpacity;
+    if (formed) {
+      const snapT = clamp((performance.now()-formedAt)/SNAP_DURATION, 0, 1);
+      particleOpacity = 1 - snapT; cardOpacity = snapT;
+    } else { particleOpacity = 1; cardOpacity = 0; }
+
+    const rect = sticky.getBoundingClientRect();
+    ctx.clearRect(0,0,rect.width,rect.height);
+    if (particleOpacity > 0.01) {
+      ctx.fillStyle = `rgba(201,209,220,${0.85*particleOpacity})`;
+      particles.forEach(p => {
+        const x = lerp(p.startX, p.homeX, gather);
+        const y = lerp(p.startY, p.homeY, gather);
+        ctx.beginPath(); ctx.arc(x,y,1.6,0,Math.PI*2); ctx.fill();
+      });
+    }
+    cards.forEach(el => { el.style.opacity = cardOpacity.toString(); });
+  }
+  frame();
+})();
+</script>
+
+</body>
+</html>
