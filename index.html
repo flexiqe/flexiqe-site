@@ -49,12 +49,13 @@
   .center-text .title { font-family:'Chakra Petch', sans-serif; font-size:clamp(1.6rem,4vw,2.4rem); font-weight:700; }
   .form-card { position:absolute; top:0; left:0; width:150px; height:150px; margin:-75px 0 0 -75px; border-radius:6px; background:rgba(21,23,28,0.92); border:1px solid rgba(155,161,170,0.25); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; backdrop-filter:blur(4px); will-change:transform,opacity; text-decoration:none; color:inherit; transition: border-color 0.25s ease, background 0.25s ease; }
   a.form-card { cursor: pointer; }
+  .form-card { z-index: 6; }
   a.form-card:hover { border-color: rgba(255,107,53,0.6); background: rgba(27,30,36,0.95); }
   .item-icon { border-radius:10px; width:40px; height:40px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.1rem; color:#fff; font-family:'Chakra Petch',sans-serif; }
   .item-icon.active { background: linear-gradient(135deg,#FF8A5C,#FF6B35); }
   .item-icon.placeholder { background: rgba(155,161,170,0.15); color:#6B707A; }
   .form-card span { font-size:0.78rem; color:#9BA1AA; font-family:'Chakra Petch',sans-serif; }
-  .canvas-layer { position:absolute; inset:0; z-index:4; display:block; }
+  .canvas-layer { position:absolute; inset:0; z-index:4; display:block; pointer-events:none; }
 
   /* About */
   .about { max-width: 640px; margin: 0 auto; padding: 140px 24px; text-align: center; }
@@ -63,7 +64,7 @@
   .about strong { color:#E7E9EC; font-weight:500; }
 
   /* Footer */
-  footer { border-top: 1px solid rgba(155,161,170,0.15); padding: 48px 24px 60px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:16px; max-width: 1000px; margin: 0 auto; }
+  footer { position:absolute; left:0; right:0; bottom:0; z-index:9; display:flex; justify-content:space-between; flex-wrap:wrap; gap:16px; padding: 22px max(24px, calc((100% - 1000px)/2)) 26px; border-top: 1px solid rgba(155,161,170,0.15); background: linear-gradient(to top, rgba(6,7,8,0.92), rgba(6,7,8,0)); }
   footer a { color:#9BA1AA; text-decoration:none; font-size:0.9rem; transition: color 0.2s ease; }
   footer a:hover { color:#E7E9EC; }
   .footer-copy { color:#4A4F58; font-size:0.82rem; }
@@ -170,17 +171,10 @@
     </div>
 
     <div class="hero-tagline" id="tagline">Endless Possibilities.</div>
-    <div class="scroll-hint" id="scrollHint" onclick="document.getElementById('secForm').scrollIntoView({behavior:'smooth'})">Scroll ↓</div>
+    <div class="scroll-hint" id="scrollHint" onclick="document.getElementById('aboutSection').scrollIntoView({behavior:'smooth'})">Scroll ↓</div>
   </div>
 
-  <div class="pin-section" id="secForm" style="height: 300vh;">
-    <div class="pin-sticky" id="stickyForm">
-      <canvas id="particleCanvas" class="canvas-layer"></canvas>
-      <div class="center-text"><div class="eyebrow">OUR APPS</div><div class="title">Flexiqe</div></div>
-    </div>
-  </div>
-
-  <div class="about">
+  <div class="about" id="aboutSection">
     <div class="eyebrow">ABOUT</div>
     <p style="font-family:'Chakra Petch',sans-serif; font-weight:500; color:#E7E9EC; font-size:1.15rem; margin-bottom:18px;">
       Flexiqe — Built for Every Possibility.
@@ -193,10 +187,16 @@
     </p>
   </div>
 
-  <footer>
-    <a href="mailto:petmate2k24@gmail.com">petmate2k24@gmail.com</a>
-    <span class="footer-copy">© 2026 Flexiqe</span>
-  </footer>
+  <div class="pin-section" id="secForm" style="height: 260vh;">
+    <div class="pin-sticky" id="stickyForm">
+      <canvas id="particleCanvas" class="canvas-layer"></canvas>
+      <div class="center-text"><div class="eyebrow">OUR APPS</div><div class="title">Flexiqe</div></div>
+      <footer>
+        <a href="mailto:petmate2k24@gmail.com">petmate2k24@gmail.com</a>
+        <span class="footer-copy">&copy; 2026 Flexiqe</span>
+      </footer>
+    </div>
+  </div>
 
 </div>
 
@@ -276,7 +276,7 @@ function easeOutCubic(t){ return 1-Math.pow(1-t,3); }
     const spacing = span / (slotCount - 1);
     return Array.from({length: slotCount}, (_, i) => ({
       x: rect.width/2 + (i - (slotCount-1)/2) * spacing,
-      y: rect.height/2 + 150
+      y: rect.height/2 + 130
     }));
   }
   let slots = computeSlots();
@@ -340,7 +340,7 @@ function easeOutCubic(t){ return 1-Math.pow(1-t,3); }
         ctx.beginPath(); ctx.arc(x,y,1.6,0,Math.PI*2); ctx.fill();
       });
     }
-    cards.forEach(el => { el.style.opacity = cardOpacity.toString(); });
+    cards.forEach(el => { el.style.opacity = cardOpacity.toString(); el.style.pointerEvents = cardOpacity > 0.5 ? 'auto' : 'none'; });
   }
   frame();
 })();
